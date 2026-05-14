@@ -1,0 +1,60 @@
+.app-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 1.2rem;
+  padding: 1rem;
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  color: var(--color-yellow);
+  font-size: 1.3rem;
+  animation: blink 1s step-end infinite;
+  margin: 0;
+}
+
+.loading-sub {
+  font-family: var(--font-mono);
+  color: var(--color-dim);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.err-text {
+  font-family: var(--font-mono);
+  color: var(--color-red);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.retro-btn {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  background: var(--bg-panel);
+  color: var(--color-cyan);
+  border: 2px solid var(--color-cyan);
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.retro-btn:hover {
+  background: var(--color-cyan);
+  color: var(--bg);
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}

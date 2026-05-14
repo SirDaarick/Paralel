@@ -1,0 +1,74 @@
+.sim-panel-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid var(--bg-panel);
+  padding: 12px;
+  background: rgba(12, 12, 12, 0.8);
+  flex: 1;
+  min-width: 0;
+}
+
+.sim-panel-inner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.sim-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 90px;
+}
+
+.thinking-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-yellow);
+  padding: 2px 6px;
+  border: 1px solid var(--color-yellow);
+  opacity: 0;
+  min-height: 1.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.thinking-indicator.visible {
+  opacity: 1;
+  animation: blink 0.8s step-end infinite;
+}
+
+.sim-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-dim);
+}
+
+.sim-final-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.stat-line {
+  color: var(--color-dim);
+}
+
+.stat-val {
+  color: var(--color-green);
+  font-weight: bold;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
