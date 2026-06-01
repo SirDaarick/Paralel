@@ -2,16 +2,26 @@
   --bg: #0c0c0c;
   --bg-panel: #1a1a2e;
   --border: #2e303a;
-  --cell-size: 24px;
-  --font-mono: "Courier New", "IBM Plex Mono", "Liberation Mono", monospace;
+  --cell-size: 16px;
+
+  --font-display: "VT323", monospace;
+  --font-mono: "JetBrains Mono", "Share Tech Mono", monospace;
+
   --color-cyan: #00ffff;
   --color-magenta: #ff00ff;
   --color-yellow: #ffff00;
   --color-green: #00ff00;
-  --color-red: #ff0000;
+  --color-red: #ff3333;
   --color-orange: #ff8800;
-  --color-blue: #0000ff;
-  --color-dim: #9ca3af;
+  --color-blue: #0088ff;
+  --color-purple: #cc00ff;
+  --color-dim: #a0a0a0;
+
+  /* Z-index scale */
+  --z-scanlines: 1000;
+  --z-vignette: 1001;
+  --z-modal-overlay: 2000;
+  --z-modal-content: 2001;
 }
 
 * {
@@ -21,17 +31,18 @@
 }
 
 html {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 body {
   background: var(--bg);
   font-family: var(--font-mono);
   color: var(--color-dim);
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 
+/* Scanlines overlay */
 body::before {
   content: "";
   position: fixed;
@@ -40,13 +51,85 @@ body::before {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.07) 2px,
-    rgba(0, 0, 0, 0.07) 4px
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
   );
   pointer-events: none;
-  z-index: 1000;
+  z-index: var(--z-scanlines);
+  animation: scanline-shift 0.1s linear infinite;
 }
 
+/* CRT vignette — simulates tube curvature */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.65) 100%);
+  pointer-events: none;
+  z-index: var(--z-vignette);
+}
+
+/* Subtle phosphor dot grid */
+.crt-grid {
+  background-image: radial-gradient(circle, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ============================================
+   Global Animations
+   ============================================ */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
+}
+
+@keyframes scanline-shift {
+  from { background-position: 0 0; }
+  to { background-position: 0 4px; }
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--color-cyan); }
+  50% { box-shadow: 0 0 12px var(--color-cyan), 0 0 24px var(--color-cyan); }
+}
+
+@keyframes bar-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.6); }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  body::before { animation: none !important; }
+}
+
+/* ============================================
+   Scrollbar
+   ============================================ */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg); border: 1px solid var(--bg-panel); }
 ::-webkit-scrollbar-thumb { background: var(--border); border: 1px solid var(--color-magenta); }
@@ -55,19 +138,47 @@ body::before {
 
 * { scrollbar-width: thin; scrollbar-color: var(--border) var(--bg); }
 
+/* ============================================
+   Selection
+   ============================================ */
 ::selection { background: var(--color-magenta); color: var(--bg); }
 
+/* ============================================
+   Root
+   ============================================ */
 #root {
   width: 100%;
   max-width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-@media (max-width: 1400px) {
+/* ============================================
+   Screen-reader utility
+   ============================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================
+   Responsive (mobile-first)
+   ============================================ */
+@media (min-width: 600px) {
+  html { font-size: 15px; }
+}
+
+@media (min-width: 900px) {
   html { font-size: 16px; }
+  :root { --cell-size: 24px; }
 }
 
-@media (max-width: 900px) {
-  html { font-size: 14px; }
-  :root { --cell-size: 16px; }
+@media (min-width: 1400px) {
+  html { font-size: 18px; }
 }

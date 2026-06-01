@@ -8,6 +8,7 @@
   background: rgba(12, 12, 12, 0.8);
   flex: 1;
   min-width: 0;
+  animation: fade-in-up 0.5s ease-out both;
 }
 
 .sim-panel-inner {
@@ -36,11 +37,14 @@
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s;
+  text-shadow: 0 0 6px rgba(255, 255, 0, 0.4);
 }
 
 .thinking-indicator.visible {
   opacity: 1;
-  animation: blink 0.8s step-end infinite;
+  animation: blink 0.8s step-end infinite, glow-pulse 1.5s ease-in-out infinite;
+  border-color: var(--color-yellow);
+  box-shadow: 0 0 8px rgba(255, 255, 0, 0.3);
 }
 
 .sim-stats {
@@ -67,8 +71,5 @@
 .stat-val {
   color: var(--color-green);
   font-weight: bold;
-}
-
-@keyframes blink {
-  50% { opacity: 0; }
+  text-shadow: 0 0 6px rgba(0, 255, 0, 0.3);
 }

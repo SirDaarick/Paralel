@@ -4,6 +4,8 @@ LDFLAGS := -lpthread
 
 NVCC := $(shell which nvcc 2>/dev/null)
 USE_CUDA := $(if $(NVCC),1,0)
+CUDA_BASE := $(if $(NVCC),$(dir $(NVCC))..,)
+CUDA_LIB := $(if $(CUDA_BASE),$(wildcard $(CUDA_BASE)/lib64),$(wildcard /usr/local/cuda/lib64 /opt/cuda/lib64 /opt/cuda/targets/x86_64-linux/lib))
 
 SRC_DIR := src
 BUILD_DIR := build
@@ -23,7 +25,7 @@ ifeq ($(USE_CUDA),1)
     TETRIS_SRCS += $(SRC_DIR)/tetris/solver_cuda.cu
     CXXFLAGS += -DUSE_CUDA
     NVCCFLAGS := -std=c++14 -O2 -DUSE_CUDA -arch=sm_75
-    LDFLAGS += -L/usr/local/cuda/lib64 -lcudart
+    LDFLAGS += -L$(CUDA_LIB) -lcudart
 else
     TETRIS_SRCS += $(SRC_DIR)/tetris/solver_cuda_stub.cpp
 endif

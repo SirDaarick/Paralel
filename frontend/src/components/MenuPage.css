@@ -7,17 +7,29 @@
   gap: 1.2rem;
 }
 
-.ascii-title {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--color-cyan);
-  line-height: 1.2;
-  text-align: center;
-  margin: 0;
-  user-select: none;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
-}
+.menu-page > *:nth-child(1) { animation: fade-in-up 0.5s ease-out both; }
+.menu-page > *:nth-child(2) { animation: fade-in-up 0.5s ease-out 0.08s both; }
+.menu-page > *:nth-child(3) { animation: fade-in-up 0.5s ease-out 0.16s both; }
 
+.ascii-title {
+  /* 1. CAMBIO CRUCIAL: Debe ser monoespaciada para que no se desfase */
+  font-family: 'Courier New', Courier, monospace; 
+  
+  /* 2. CAMBIO CRUCIAL: Evita que el HTML colapse los espacios en blanco */
+  white-space: pre; 
+  
+  /* Mantiene el bloque centrado en pantallas grandes */
+  display: block;
+  width: max-content;
+  margin: 0 auto;
+
+  font-size: 0.85rem;
+  color: var(--color-cyan);
+  line-height: 1.15;
+  text-align: left; /* El alineado interno debe ser a la izquierda para respetar la estructura */
+  user-select: none;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.15);
+}
 .menu-box {
   display: flex;
   flex-direction: column;
@@ -49,8 +61,8 @@
 }
 
 .slider-value {
-  font-family: var(--font-mono);
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
   color: var(--color-yellow);
   letter-spacing: 2px;
 }
@@ -71,11 +83,11 @@
   cursor: pointer;
   user-select: none;
   line-height: 1;
-  transition: transform 0.1s;
+  transition: transform 0.15s ease, color 0.2s ease;
 }
 
-.slider-block:hover { transform: scale(1.15); }
-.slider-block.filled { color: var(--color-green); }
+.slider-block:hover { transform: scale(1.2); }
+.slider-block.filled { color: var(--color-green); text-shadow: 0 0 8px rgba(0, 255, 0, 0.6); }
 .slider-block.empty { color: var(--border); }
 
 .slider-input {
@@ -98,14 +110,15 @@
   color: var(--color-dim);
   cursor: pointer;
   padding: 2px 6px;
-  transition: color 0.15s;
+  transition: color 0.15s, transform 0.1s;
 }
 
-.slider-num:hover { color: var(--color-magenta); }
+.slider-num:hover { color: var(--color-magenta); transform: scale(1.15); }
 .slider-num.active {
   color: var(--color-yellow);
   font-weight: bold;
   border-bottom: 2px solid var(--color-yellow);
+  text-shadow: 0 0 6px rgba(255, 255, 0, 0.5);
 }
 
 .menu-info {
@@ -128,23 +141,26 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.1s;
+  transition: transform 0.15s ease;
 }
 
-.menu-start-btn:hover { transform: scale(1.03); }
+.menu-start-btn:hover { transform: scale(1.04); }
 .menu-start-btn:active { transform: scale(0.97); }
 
 .btn-border {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
   color: var(--color-green);
-  line-height: 1.3;
+  line-height: 1.25;
   display: inline-block;
+  text-shadow: 0 0 6px rgba(0, 255, 0, 0.4);
+  transition: color 0.2s, text-shadow 0.2s;
 }
 
 .menu-start-btn:hover .btn-border {
   color: var(--bg);
   background: var(--color-green);
+  text-shadow: none;
 }
 
 .menu-theory-btn {
@@ -156,13 +172,14 @@
   padding: 4px 16px;
   cursor: pointer;
   letter-spacing: 3px;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.25s;
   text-transform: uppercase;
 }
 
 .menu-theory-btn:hover {
   background: var(--color-cyan);
   color: var(--bg);
+  box-shadow: 0 0 10px var(--color-cyan);
 }
 
 /* History */
@@ -201,12 +218,13 @@
   display: flex;
   gap: 1rem;
   align-items: center;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.2s;
   text-align: left;
 }
 
 .history-item:hover {
   border-color: var(--color-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.15), inset 0 0 6px rgba(0, 255, 255, 0.05);
 }
 
 .history-date { color: var(--color-dim); min-width: 130px; }

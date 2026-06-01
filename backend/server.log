@@ -1,0 +1,5 @@
+Backend corriendo en http://localhost:8080
+[simulation 19e40d59d94-0] seq done: 30 pieces, 15424 ms
+[simulation 19e40d59d94-0] omp done: 115 pieces, 15115.9 ms
+[simulation 19e40d59d94-0] cuda done: 165 pieces, 15031.1 ms
+[simulation 19e40d59d94-0] completed

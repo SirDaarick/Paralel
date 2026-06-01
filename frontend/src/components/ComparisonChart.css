@@ -13,11 +13,12 @@
 }
 
 .chart-title {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
   color: var(--color-cyan);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   margin-bottom: 2px;
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.3);
 }
 
 .chart-row {
@@ -46,6 +47,7 @@
   height: 100%;
   transition: width 0.5s ease;
   min-width: 0;
+  box-shadow: 0 0 8px currentColor;
 }
 
 .chart-value {

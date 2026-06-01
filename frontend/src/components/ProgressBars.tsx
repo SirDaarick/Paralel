@@ -7,7 +7,7 @@ interface ProgressBarsProps {
 }
 
 const ALGOS = [
-  { key: "seq", label: "SECUENCIAL", color: "#ff0000" },
+  { key: "seq", label: "SECUENCIAL", color: "#ff3333" },
   { key: "omp", label: "OpenMP", color: "#00ff00" },
   { key: "cuda", label: "CUDA", color: "#00ffff" },
 ];
@@ -41,7 +41,7 @@ export function ProgressBars({ progress, currentAlgorithm, lookAhead }: Progress
           }
 
           return (
-            <div key={algo.key} className="progress-row">
+            <div key={algo.key} className={`progress-row${isCurrent ? " running" : ""}`}>
               <span className="progress-label" style={{ color: algo.color }}>
                 {algo.label}
               </span>

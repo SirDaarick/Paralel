@@ -15,24 +15,25 @@ interface MenuPageProps {
   onTheory?: () => void;
   history?: HistoryEntry[];
   onHistorySelect?: (entry: HistoryEntry) => void;
+  isStarting?: boolean;
 }
 
 const ASCII_TITLE = [
-  "╔════════════════════════════════════════╗",
-  "║                                        ║",
-  "║  ██████╗  █████╗ ██████╗  █████╗ ██╗     ║",
-  "║  ██╔══██╗██╔══██╗██╔══██╗██╔══██╗██║     ║",
-  "║  ██████╔╝███████║██████╔╝███████║██║     ║",
-  "║  ██╔═══╝ ██╔══██║██╔══██╗██╔══██║██║     ║",
-  "║  ██║     ██║  ██║██║  ██║██║  ██║███████╗║",
-  "║  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝║",
-  "║                                        ║",
-  "║     PARALLEL  COMPUTING  TETRIS        ║",
-  "║                                        ║",
-  "╚════════════════════════════════════════╝",
+  "╔═══════════════════════════════════════════════════════════════════╗",
+  "║                                                                   ║",
+  "║     ██████╗ ██████╗ ██████╗ ██████╗ ██║     ██████╗ ██║           ║",
+  "║     ██  ██║ ██  ██║ ██  ██║ ██  ██║ ██║     ██║     ██║           ║",
+  "║     ██████╝ ██████║ ██████╝ ██████║ ██║     ██████╗ ██║           ║",
+  "║     ██║     ██  ██║ ██  ██║ ██  ██║ ██║     ██║     ██║           ║",
+  "║     ██║     ██  ██║ ██  ██║ ██  ██║ ██████╗ ██████╗ ██████╗       ║",
+  "║     ╚═╝     ╚═╝ ╚═╝ ╚═╝ ╚═╝ ╚═╝ ╚═╝ ╚═════╝ ╚═════╝ ╚═════╝       ║",
+  "║                                                                   ║",
+  "║                 SIMULACIÓN DE TETRIS EN PARALELO                  ║",
+  "║                                                                   ║",
+  "╚═══════════════════════════════════════════════════════════════════╝",
 ];
 
-export function MenuPage({ lookAhead, onLookAheadChange, onStart, onTheory, history = [], onHistorySelect }: MenuPageProps) {
+export function MenuPage({ lookAhead, onLookAheadChange, onStart, onTheory, history = [], onHistorySelect, isStarting = false }: MenuPageProps) {
   const blockCount = lookAhead;
   const maxBlocks = 5;
 

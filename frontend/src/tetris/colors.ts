@@ -1,12 +1,12 @@
 export const PIECE_COLORS: Record<number, string> = {
   0: "#0c0c0c",
-  1: "#00FFFF", // I - cyan
-  2: "#FFFF00", // O - yellow
-  3: "#FF00FF", // T - magenta
-  4: "#00FF00", // S - green
-  5: "#FF0000", // Z - red
-  6: "#0000FF", // J - blue
-  7: "#FF8800", // L - orange
+  1: "#00ffff", // I - cyan
+  2: "#ffff00", // O - yellow
+  3: "#ff00ff", // T - magenta
+  4: "#00ff00", // S - green
+  5: "#ff3333", // Z - red (vivid arcade red)
+  6: "#0088ff", // J - blue (electric blue)
+  7: "#ff8800", // L - orange
 };
 
 export const PIECE_NAMES: Record<number, string> = {

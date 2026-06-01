@@ -6,7 +6,7 @@ interface ComparisonChartProps {
 }
 
 const ALGO_COLORS: Record<string, string> = {
-  seq: "#ff0000",
+  seq: "#ff3333",
   omp: "#00ff00",
   cuda: "#00ffff",
 };

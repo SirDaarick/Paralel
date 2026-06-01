@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { MenuPage } from "./components/MenuPage";
 import { SimulationPage } from "./components/SimulationPage";
 import { ResultsPage } from "./components/ResultsPage";
@@ -7,8 +8,6 @@ import { TheoryModal } from "./components/TheoryModal";
 import { useSimulation } from "./hooks/useSimulation";
 import type { SimulationResult } from "./hooks/api-types";
 import "./App.css";
-
-type Page = "menu" | "simulation" | "results";
 
 const HISTORY_KEY = "paralel_history";
 
@@ -35,7 +34,7 @@ function saveHistory(entry: HistoryEntry) {
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>("menu");
+  const navigate = useNavigate();
   const [lookAhead, setLookAhead] = useState(2);
   const { status, result, error, progress, currentAlgorithm, start, reset } =
     useSimulation({ lookAhead });
@@ -45,25 +44,25 @@ export default function App() {
 
   const handleStart = () => {
     setLoadFromHistory(null);
-    setPage("simulation");
+    navigate("/simulation");
     start();
   };
 
   const handleHistorySelect = (entry: HistoryEntry) => {
     setLoadFromHistory(entry.result);
     setLookAhead(entry.lookAhead);
-    setPage("simulation");
+    navigate("/simulation");
   };
 
   const handleBack = () => {
     reset();
     setLoadFromHistory(null);
-    setPage("menu");
+    navigate("/");
     setHistory(loadHistory());
   };
 
   const handleResults = () => {
-    setPage("results");
+    navigate("/results");
   };
 
   // Save completed simulation to history
@@ -80,68 +79,10 @@ export default function App() {
     }
   }, [status, result, lookAhead, loadFromHistory]);
 
-  if (page === "simulation") {
-    if (loadFromHistory) {
-      return (
-        <SimulationPage
-          replays={loadFromHistory.replays}
-          onResults={handleResults}
-          lookAhead={lookAhead}
-        />
-      );
-    }
+  const isSimActive = status !== "idle";
 
-    if (status === "error") {
-      return (
-        <div className="app-center">
-          <div className="error-box">
-            <p className="err-text">ERROR: {error}</p>
-            <button className="retro-btn" onClick={handleBack}>VOLVER</button>
-          </div>
-        </div>
-      );
-    }
-
-    if (status === "running" || status === "starting") {
-      return (
-        <div className="app-center">
-          <ProgressBars
-            progress={progress}
-            currentAlgorithm={currentAlgorithm}
-            lookAhead={lookAhead}
-          />
-        </div>
-      );
-    }
-
-    if (status === "completed" && result) {
-      return (
-        <SimulationPage
-          replays={result.replays}
-          onResults={handleResults}
-          lookAhead={lookAhead}
-        />
-      );
-    }
-
-    return (
-      <div className="app-center">
-        <p className="loading-text">INICIANDO...</p>
-      </div>
-    );
-  }
-
-  if (page === "results" && (result || loadFromHistory)) {
-    return (
-      <ResultsPage
-        replays={(result ?? loadFromHistory)!.replays}
-        lookAhead={lookAhead}
-        onBack={handleBack}
-      />
-    );
-  }
-
-  return (
+  /* ---------- / (Menu) ---------- */
+  const menuElement = (
     <>
       {showTheory && <TheoryModal onClose={() => setShowTheory(false)} />}
       <MenuPage
@@ -151,7 +92,80 @@ export default function App() {
         onTheory={() => setShowTheory(true)}
         history={history}
         onHistorySelect={handleHistorySelect}
+        isStarting={isSimActive}
       />
     </>
+  );
+
+  /* ---------- /simulation ---------- */
+  let simContent: React.ReactNode;
+
+  if (loadFromHistory) {
+    simContent = (
+      <SimulationPage
+        replays={loadFromHistory.replays}
+        onResults={handleResults}
+        lookAhead={lookAhead}
+      />
+    );
+  } else if (status === "error") {
+    simContent = (
+      <div className="app-center">
+        <div className="error-box">
+          <p className="err-text">ERROR: {error}</p>
+          <button className="retro-btn" onClick={handleBack}>VOLVER</button>
+        </div>
+      </div>
+    );
+  } else if (status === "running" || status === "starting") {
+    simContent = (
+      <div className="app-center">
+        <ProgressBars
+          progress={progress}
+          currentAlgorithm={currentAlgorithm}
+          lookAhead={lookAhead}
+        />
+      </div>
+    );
+  } else if (status === "completed" && result) {
+    simContent = (
+      <SimulationPage
+        replays={result.replays}
+        onResults={handleResults}
+        lookAhead={lookAhead}
+      />
+    );
+  } else {
+    simContent = (
+      <div className="app-center">
+        <p className="loading-text">INICIANDO...</p>
+      </div>
+    );
+  }
+
+  const simulationElement = <>{simContent}</>;
+
+  /* ---------- /results ---------- */
+  const resultsElement =
+    result || loadFromHistory ? (
+      <ResultsPage
+        replays={(result ?? loadFromHistory)!.replays}
+        lookAhead={lookAhead}
+        onBack={handleBack}
+      />
+    ) : (
+      <div className="app-center">
+        <p className="err-text">No hay resultados disponibles</p>
+        <button className="retro-btn" onClick={() => navigate("/")}>VOLVER</button>
+      </div>
+    );
+
+  return (
+    <Routes>
+      <Route path="/" element={menuElement} />
+      <Route path="/simulation" element={simulationElement} />
+      <Route path="/results" element={resultsElement} />
+      <Route path="*" element={menuElement} />
+    </Routes>
   );
 }
