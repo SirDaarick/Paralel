@@ -1,4 +1,5 @@
 import type { SimulationResult } from "../hooks/api-types";
+import { IS_DEMO_MODE } from "../services";
 import "./MenuPage.css";
 
 interface HistoryEntry {
@@ -16,6 +17,9 @@ interface MenuPageProps {
   history?: HistoryEntry[];
   onHistorySelect?: (entry: HistoryEntry) => void;
   isStarting?: boolean;
+  simMode?: "classic" | "mpi";
+  onSimModeChange?: (mode: "classic" | "mpi") => void;
+  mpiAvailable?: boolean;
 }
 
 const ASCII_TITLE = [
@@ -33,7 +37,18 @@ const ASCII_TITLE = [
   "╚═══════════════════════════════════════════════════════════════════╝",
 ];
 
-export function MenuPage({ lookAhead, onLookAheadChange, onStart, onTheory, history = [], onHistorySelect, isStarting = false }: MenuPageProps) {
+export function MenuPage({
+  lookAhead,
+  onLookAheadChange,
+  onStart,
+  onTheory,
+  history = [],
+  onHistorySelect,
+  isStarting = false,
+  simMode = "classic",
+  onSimModeChange,
+  mpiAvailable = false,
+}: MenuPageProps) {
   const blockCount = lookAhead;
   const maxBlocks = 5;
 
@@ -44,6 +59,42 @@ export function MenuPage({ lookAhead, onLookAheadChange, onStart, onTheory, hist
       </pre>
 
       <div className="menu-box">
+        {IS_DEMO_MODE && (
+          <div className="demo-mode-badge">
+            <span className="demo-badge-dot">●</span> MODO DEMO ACTIVO (STANDALONE)
+          </div>
+        )}
+        {onSimModeChange && (
+          <div className="menu-section">
+            <div className="menu-label">
+              ┌─────────────────────────┐
+              <br />
+              │  MODO DE SIMULACION    │
+              <br />
+              └─────────────────────────┘
+            </div>
+
+            <div className="mode-toggle">
+              <button
+                className={`mode-btn ${simMode === "classic" ? "active" : ""}`}
+                onClick={() => onSimModeChange("classic")}
+                disabled={isStarting}
+              >
+                CLÁSICO
+              </button>
+              <button
+                className={`mode-btn ${simMode === "mpi" ? "active" : ""}`}
+                onClick={() => mpiAvailable && onSimModeChange("mpi")}
+                disabled={isStarting || !mpiAvailable}
+                title={!mpiAvailable ? "MPI no disponible en el servidor" : undefined}
+              >
+                MPI vs CUDA
+                {!mpiAvailable && <span className="mode-unavailable"> (no disponible)</span>}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="menu-section">
           <div className="menu-label">
             ┌─────────────────────────┐

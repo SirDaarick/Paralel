@@ -1,8 +1,6 @@
 #include "simulation.h"
 #include "solver_omp.h"
-#ifdef USE_CUDA
 #include "solver_cuda.h"
-#endif
 #include <random>
 #include <sstream>
 #include <iomanip>
@@ -180,8 +178,7 @@ void SimulationManager::runSimulation(const std::string& id, int lookAhead,
                   << replay.totalTimeMs << " ms" << std::endl;
     }
 
-#ifdef USE_CUDA
-    // Run CUDA algorithm
+// Run CUDA algorithm (uses stub = sequential fallback when no GPU)
     {
         BruteForceSolverCUDA solver;
         auto replay = runAlgorithm(solver, "cuda", lookAhead, seed,
@@ -199,7 +196,6 @@ void SimulationManager::runSimulation(const std::string& id, int lookAhead,
                   << replay.totalPieces << " pieces, "
                   << replay.totalTimeMs << " ms" << std::endl;
     }
-#endif
 
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = simulations_.find(id);

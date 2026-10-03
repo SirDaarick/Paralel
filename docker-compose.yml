@@ -1,0 +1,41 @@
+# paralel — MPI distributed stack
+# Master runs the HTTP server; workers provide additional MPI ranks via SSH.
+# All services share a bridge network so mpirun resolves worker hostnames.
+#
+# Usage:
+#   docker compose up   # master + 2 workers
+
+version: "3.8"
+
+services:
+  master:
+    build: .
+    container_name: paralel-master
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    environment:
+      - MPI_PROCESSES=${MPI_PROCESSES:-6}
+      - MPI_HOSTS=/etc/mpi/hosts
+      - HTTP_PORT=8080
+      - MPI_SOLVER_PATH=./paralel-mpi-solver
+    networks:
+      - mpi-net
+
+  worker1:
+    build: .
+    container_name: paralel-worker1
+    # Workers only need SSH — override the default CMD
+    command: ["/usr/sbin/sshd", "-D"]
+    networks:
+      - mpi-net
+
+  worker2:
+    build: .
+    container_name: paralel-worker2
+    command: ["/usr/sbin/sshd", "-D"]
+    networks:
+      - mpi-net
+
+networks:
+  mpi-net:
+    driver: bridge

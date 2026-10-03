@@ -44,6 +44,11 @@ public:
     SimulationStatus getStatus(const std::string& id);
     bool hasSimulation(const std::string& id);
 
+    // runAlgorithm is public so the standalone MPI binary can reuse it
+    ReplayData runAlgorithm(BruteForceSolver& solver, const std::string& algo,
+                            int lookAhead, unsigned int seed, double timeLimitMs,
+                            const std::vector<PieceType>& pieceSequence);
+
 private:
     struct SimulationState {
         SimulationStatus status;
@@ -54,8 +59,5 @@ private:
     std::mutex mutex_;
 
     void runSimulation(const std::string& id, int lookAhead, unsigned int seed);
-    ReplayData runAlgorithm(BruteForceSolver& solver, const std::string& algo,
-                            int lookAhead, unsigned int seed, double timeLimitMs,
-                            const std::vector<PieceType>& pieceSequence);
     std::string generateId();
 };

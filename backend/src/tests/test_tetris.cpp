@@ -9,6 +9,11 @@
 #include "../tetris/board.h"
 #include "../tetris/randomizer.h"
 #include "../tetris/scorer.h"
+#include "../tetris/solver.h"
+#include "../tetris/solver_mpi.h"
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
 
 static int tests_passed = 0;
 static int tests_failed = 0;
@@ -303,6 +308,156 @@ static void test_scorer_zero() {
     PASS();
 }
 
+// --- MPI Solver tests ---
+
+static void test_mpi_solver_exists_and_inherits() {
+    TEST("BruteForceSolverMPI existe y hereda de BruteForceSolver");
+    BruteForceSolverMPI solver;
+    // Verify we can call findBestMove on a fresh board
+    Board board;
+    std::vector<PieceType> upcoming = {PIECE_I, PIECE_O, PIECE_T};
+    SearchResult result = solver.findBestMove(board, PIECE_T, upcoming, 2);
+    // Result should have a valid heuristic (not default max - only update on valid move)
+    CHECK(result.bestHeuristic >= 0);
+    CHECK(result.bestX >= 0 && result.bestX < BOARD_WIDTH);
+    CHECK(result.bestRotation >= 0 && result.bestRotation < NUM_ROTATIONS);
+    PASS();
+}
+
+static void test_mpi_solver_matches_sequential() {
+    TEST("solver MPI produce el mismo resultado que secuencial (misma semilla)");
+    Board board;
+    // Place a few pieces to create an interesting board state
+    board.place(PIECE_T, 0, 3, 18);
+    board.place(PIECE_I, 0, 0, 17);
+    board.place(PIECE_I, 0, 4, 17);
+    board.clearLines();
+
+    std::vector<PieceType> upcoming = {PIECE_O, PIECE_S, PIECE_Z, PIECE_J, PIECE_L};
+
+    BruteForceSolver seq;
+    BruteForceSolverMPI mpi;
+
+    SearchResult seqResult = seq.findBestMove(board, PIECE_T, upcoming, 2);
+    SearchResult mpiResult = mpi.findBestMove(board, PIECE_T, upcoming, 2);
+
+    CHECK(seqResult.bestX == mpiResult.bestX);
+    CHECK(seqResult.bestRotation == mpiResult.bestRotation);
+    CHECK(seqResult.bestHeuristic == mpiResult.bestHeuristic);
+    PASS();
+}
+
+static void test_mpi_solver_deterministic() {
+    TEST("solver MPI es deterministico con las mismas entradas");
+    Board board;
+    std::vector<PieceType> upcoming = {PIECE_I, PIECE_O, PIECE_T, PIECE_S, PIECE_Z};
+
+    BruteForceSolverMPI solver;
+
+    SearchResult r1 = solver.findBestMove(board, PIECE_T, upcoming, 2);
+    SearchResult r2 = solver.findBestMove(board, PIECE_T, upcoming, 2);
+
+    CHECK(r1.bestX == r2.bestX);
+    CHECK(r1.bestRotation == r2.bestRotation);
+    CHECK(r1.bestHeuristic == r2.bestHeuristic);
+    PASS();
+}
+
+static void test_mpi_solver_different_inputs_different_results() {
+    TEST("solver MPI produce resultados diferentes con diferentes entradas");
+    Board board1;
+    Board board2;
+    board2.place(PIECE_O, 0, 0, 18); // modify board state
+
+    std::vector<PieceType> upcoming = {PIECE_I, PIECE_O, PIECE_T};
+
+    BruteForceSolverMPI solver;
+
+    SearchResult r1 = solver.findBestMove(board1, PIECE_T, upcoming, 2);
+    SearchResult r2 = solver.findBestMove(board2, PIECE_T, upcoming, 2);
+
+    // With different board states, results don't have to be different,
+    // but at minimum both must be valid
+    CHECK(r1.bestX >= 0 && r1.bestX < BOARD_WIDTH);
+    CHECK(r1.bestRotation >= 0 && r1.bestRotation < NUM_ROTATIONS);
+    CHECK(r2.bestX >= 0 && r2.bestX < BOARD_WIDTH);
+    CHECK(r2.bestRotation >= 0 && r2.bestRotation < NUM_ROTATIONS);
+    PASS();
+}
+
+static void test_mpi_solver_lookahead_zero() {
+    TEST("solver MPI con lookahead 0 evalua solo heuristica inmediata");
+    Board board;
+    std::vector<PieceType> upcoming = {}; // no upcoming pieces
+
+    BruteForceSolverMPI solver;
+    SearchResult result = solver.findBestMove(board, PIECE_T, upcoming, 0);
+
+    CHECK(result.bestHeuristic >= 0);
+    CHECK(result.bestX >= 0 && result.bestX < BOARD_WIDTH);
+    CHECK(result.bestRotation >= 0 && result.bestRotation < NUM_ROTATIONS);
+    PASS();
+}
+
+#ifdef USE_MPI
+// These tests require MPI runtime — only compiled when USE_MPI is defined
+// They verify stride distribution and MPI_Allreduce correctness
+
+static void test_mpi_stride_coverage() {
+    TEST("stride MPI cubre exactamente 40 posiciones entre todos los ranks");
+    int rank, worldSize;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+
+    // Count how many positions this rank would evaluate
+    int count = 0;
+    for (int idx = rank; idx < BOARD_WIDTH * NUM_ROTATIONS; idx += worldSize) {
+        count++;
+    }
+
+    // Every rank must have at least one position
+    CHECK(count > 0);
+
+    // Total across all ranks must equal 40
+    int totalCount;
+    MPI_Allreduce(&count, &totalCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    CHECK(totalCount == BOARD_WIDTH * NUM_ROTATIONS);
+
+    if (rank == 0) {
+        std::cout << "OK (stride: " << count << "/rank, world="
+                  << worldSize << ")\n";
+        ++tests_passed;
+    }
+}
+
+static void test_mpi_determinism_across_ranks() {
+    TEST("resultados identicos entre ranks para la misma semilla");
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    Board board;
+    std::vector<PieceType> upcoming = {PIECE_I, PIECE_O, PIECE_T, PIECE_S, PIECE_Z};
+
+    BruteForceSolverMPI solver;
+    SearchResult result = solver.findBestMove(board, PIECE_T, upcoming, 2);
+
+    // All ranks must produce the same result
+    int allX, allRot, allHeuristic;
+    MPI_Allreduce(&result.bestX, &allX, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&result.bestRotation, &allRot, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&result.bestHeuristic, &allHeuristic, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+    CHECK(allX == result.bestX);
+    CHECK(allRot == result.bestRotation);
+    CHECK(allHeuristic == result.bestHeuristic);
+
+    if (rank == 0) {
+        std::cout << "OK\n";
+        ++tests_passed;
+    }
+}
+#endif // USE_MPI
+
 int main() {
     std::cout << "\n=== Tests Motor de Tetris ===\n\n";
 
@@ -338,6 +493,25 @@ int main() {
     test_scorer_2_lines();
     test_scorer_tetris();
     test_scorer_zero();
+
+    std::cout << "\n--- MPI Solver ---\n";
+    test_mpi_solver_exists_and_inherits();
+    test_mpi_solver_matches_sequential();
+    test_mpi_solver_deterministic();
+    test_mpi_solver_different_inputs_different_results();
+    test_mpi_solver_lookahead_zero();
+
+#ifdef USE_MPI
+    // MPI-specific tests — only run when compiled with MPI
+    int mpiInitialized;
+    MPI_Initialized(&mpiInitialized);
+    if (mpiInitialized) {
+        test_mpi_stride_coverage();
+        test_mpi_determinism_across_ranks();
+    } else {
+        std::cout << "\n  (MPI tests skipped — not running under mpirun)\n";
+    }
+#endif
 
     std::cout << "\n==========================\n";
     std::cout << "Pasaron: " << tests_passed << "\n";

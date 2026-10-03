@@ -1,27 +1,14 @@
 import type { ReplayData } from "../hooks/api-types";
+import { ALGO_META, ALGO_ORDER } from "../hooks/api-types";
 import "./ComparisonChart.css";
 
 interface ComparisonChartProps {
   replays: ReplayData[];
 }
 
-const ALGO_COLORS: Record<string, string> = {
-  seq: "#ff3333",
-  omp: "#00ff00",
-  cuda: "#00ffff",
-};
-
-const ALGO_LABELS: Record<string, string> = {
-  seq: "SEQ",
-  omp: "OMP",
-  cuda: "CUDA",
-};
-
-const ORDER = ["seq", "omp", "cuda"];
-
 export function ComparisonChart({ replays }: ComparisonChartProps) {
   const sorted = [...replays].sort(
-    (a, b) => ORDER.indexOf(a.algorithm) - ORDER.indexOf(b.algorithm)
+    (a, b) => ALGO_ORDER.indexOf(a.algorithm) - ALGO_ORDER.indexOf(b.algorithm)
   );
 
   const maxPieces = Math.max(...sorted.map((r) => r.totalPieces), 1);
@@ -41,17 +28,20 @@ export function ComparisonChart({ replays }: ComparisonChartProps) {
         {sorted.map((r) => {
           const avg = r.totalPieces > 0 ? r.totalTimeMs / r.totalPieces : 0;
           const pct = (avg / maxAvg) * 100;
+          const meta = ALGO_META[r.algorithm];
+          const color = meta?.color ?? "#a0a0a0";
+          const label = meta?.label ?? r.algorithm.toUpperCase();
           return (
             <div key={r.algorithm} className="chart-row">
-              <span className="chart-label" style={{ color: ALGO_COLORS[r.algorithm] }}>
-                {ALGO_LABELS[r.algorithm]}
+              <span className="chart-label" style={{ color }}>
+                {label}
               </span>
               <div className="chart-bar-track">
                 <div
                   className="chart-bar"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: ALGO_COLORS[r.algorithm],
+                    backgroundColor: color,
                   }}
                 />
               </div>
@@ -65,17 +55,20 @@ export function ComparisonChart({ replays }: ComparisonChartProps) {
         <div className="chart-title">PIEZAS COLOCADAS</div>
         {sorted.map((r) => {
           const pct = (r.totalPieces / maxPieces) * 100;
+          const meta = ALGO_META[r.algorithm];
+          const color = meta?.color ?? "#a0a0a0";
+          const label = meta?.label ?? r.algorithm.toUpperCase();
           return (
             <div key={r.algorithm} className="chart-row">
-              <span className="chart-label" style={{ color: ALGO_COLORS[r.algorithm] }}>
-                {ALGO_LABELS[r.algorithm]}
+              <span className="chart-label" style={{ color }}>
+                {label}
               </span>
               <div className="chart-bar-track">
                 <div
                   className="chart-bar"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: ALGO_COLORS[r.algorithm],
+                    backgroundColor: color,
                   }}
                 />
               </div>
@@ -96,17 +89,20 @@ export function ComparisonChart({ replays }: ComparisonChartProps) {
               return a > 0 ? seqAvgMs / a : 1;
             }), 1
           )) * 100, 100);
+          const meta = ALGO_META[r.algorithm];
+          const color = meta?.color ?? "#a0a0a0";
+          const label = meta?.label ?? r.algorithm.toUpperCase();
           return (
             <div key={r.algorithm} className="chart-row">
-              <span className="chart-label" style={{ color: ALGO_COLORS[r.algorithm] }}>
-                {ALGO_LABELS[r.algorithm]}
+              <span className="chart-label" style={{ color }}>
+                {label}
               </span>
               <div className="chart-bar-track">
                 <div
                   className="chart-bar"
                   style={{
                     width: `${pct}%`,
-                    backgroundColor: ALGO_COLORS[r.algorithm],
+                    backgroundColor: color,
                   }}
                 />
               </div>

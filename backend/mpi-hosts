@@ -1,0 +1,20 @@
+# paralel MPI hostfile template
+# Copy and customize for your cluster or Docker Compose setup.
+# Format: hostname [slots=N]
+#   - hostname: reachable via SSH from the master node
+#   - slots=N: max MPI ranks on this host (default: 1)
+#
+# ── Docker Compose (2 workers) ──
+# paralel-master slots=2
+# paralel-worker1 slots=2
+# paralel-worker2 slots=2
+#
+# ── Single-container demo (docker run) ──
+# localhost slots=4
+#
+# ── Native cluster (real machines) ──
+# node01 slots=8
+# node02 slots=8
+
+# Default: single-container demo
+localhost slots=4

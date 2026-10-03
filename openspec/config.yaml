@@ -1,0 +1,54 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: C++17 (backend) + React 19 + TypeScript + Vite 8 (frontend)
+  Architecture: Educational Tetris visualization — 3 brute-force solvers (sequential, OpenMP, CUDA) side-by-side
+  Testing: Custom C++17 test framework (TEST/CHECK/PASS/FAIL macros) via `make test`; no frontend tests
+  Style: Backend Makefile build, frontend npm/Vite, custom JSON serialization (no JSON library), Spanish UI/docs
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: true           # Strict TDD enabled — backend has test runner
+    test_command: "cd backend && make test"
+  verify:
+    test_command: "cd backend && make test"
+    build_command: "cd backend && make && cd ../frontend && npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: true
+  backend:
+    runner: custom_macro
+    command: cd backend && make test
+    layers:
+      unit: true
+      integration: false
+      e2e: false
+    coverage: false
+  frontend:
+    runner: null
+    command: null
+    layers:
+      unit: false
+      integration: false
+      e2e: false
+    coverage: false
+  quality:
+    linter: "cd frontend && npm run lint"
+    type_checker: "cd frontend && npx tsc -b --noEmit"
+    formatter: null

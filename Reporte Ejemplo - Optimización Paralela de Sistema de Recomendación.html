@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!-- saved from url=(0075)http://192.168.0.100/c_paralelo/evaluacion/proyecto/reporte_ejemplo_v2.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ejemplo - Optimización Paralela de Sistema de Recomendación</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f2f5;
+            color: #1e2a3a;
+            line-height: 1.5;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: #1a4a4a;
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+        .content {
+            padding: 2rem;
+        }
+        h1, h2, h3 {
+            color: #1a4a4a;
+        }
+        h2 {
+            border-bottom: 2px solid #1a4a4a;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .problem-box {
+            background: #eef2f5;
+            border-left: 5px solid #1a4a4a;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        th {
+            background: #e0ecec;
+        }
+        .image-placeholder {
+            background: #f5f7fa;
+            border: 2px dashed #1a4a4a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+            cursor: help;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .image-placeholder:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            background-color: #1e2a3a;
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            position: absolute;
+            bottom: 120%;
+            left: 10%;
+            width: 280px;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 20px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1e2a3a transparent transparent transparent;
+        }
+        .footer-note {
+            background: #eef2f5;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .formula {
+            background: #f9f9f9;
+            padding: 0.8rem;
+            font-family: monospace;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            text-align: center;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Reporte de Proyecto Integrador</h1>
+        <p><strong>Problema:</strong> Optimización del kernel de multiplicación de matrices en un sistema de recomendación por factorización matricial (SVD) para plataforma de streaming.</p>
+        <p><strong>Estudiante:</strong> Ana López Torres | <strong>Fecha:</strong> Junio 2026</p>
+        <p><strong>Materia:</strong> Cómputo Paralelo · Ingeniería en Inteligencia Artificial</p>
+    </header>
+    <div class="content">
+        
+        <h2>1. Contexto y descripción del problema</h2>
+        <div class="problem-box">
+            <strong>🎬 Escenario:</strong> Una plataforma de streaming con 500,000 usuarios y 50,000 películas necesita generar recomendaciones personalizadas. Se utiliza <strong>factorización matricial</strong> (Funk-SVD): la matriz de calificaciones R (usuarios × películas) se aproxima como R ≈ U × V, donde U es de tamaño U×K y V de tamaño K×I, con K=100 factores latentes. Durante el entrenamiento (descenso por gradiente), el paso más costoso es calcular el error de predicción, que involucra <strong>multiplicaciones de matrices densas</strong> de tamaño (U×K) × (K×I) = U×I, con U=500,000, I=50,000, K=100. Este kernel se ejecuta en cada iteración (típicamente 200 iteraciones).
+        </div>
+        <p>El objetivo del proyecto es <strong>acelerar la multiplicación de matrices</strong> (operación central) utilizando técnicas de cómputo paralelo, manteniendo la precisión numérica y reduciendo el tiempo de entrenamiento de horas a minutos.</p>
+        
+        <div class="image-placeholder">
+            <span>📷 figura1.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Diagrama de flujo del algoritmo de factorización matricial SVD para recomendaciones, mostrando el bucle de actualización y el kernel de multiplicación de matrices en rojo."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>2. Análisis de operaciones</h2>
+        <p>Para una iteración del algoritmo, se multiplica la matriz de usuarios latentes U (N<sub>u</sub> × K) por la matriz de películas latentes V<sup>T</sup> (K × N<sub>i</sub>).</p>
+        <div class="formula">
+            Cálculo de operaciones por iteración: <strong>Total ops = 2 × N<sub>u</sub> × N<sub>i</sub> × K - N<sub>u</sub> × N<sub>i</sub></strong>
+        </div>
+        <p>Con N<sub>u</sub> = 500,000, N<sub>i</sub> = 50,000, K = 100:</p>
+        <ul>
+            <li>Multiplicaciones: 500k × 50k × 100 = <strong>2.5 × 10<sup>12</sup></strong></li>
+            <li>Sumas: 500k × 50k × (100-1) ≈ <strong>2.475 × 10<sup>12</sup></strong></li>
+            <li>Total operaciones por iteración ≈ <strong>4.975 × 10<sup>12</sup> ≈ 5 × 10<sup>12</sup> operaciones escalares</strong></li>
+        </ul>
+        <p>Si el entrenamiento requiere 200 iteraciones, el cómputo total es del orden de <strong>10<sup>15</sup> operaciones</strong> (1 peta-operación).</p>
+
+        <h2>3. Caso de estudio 1: Hardware específico</h2>
+        <p><strong>Hardware disponible:</strong> Estación de trabajo con CPU AMD Ryzen 9 7950X (16 núcleos / 32 hilos, 5.7 GHz) y GPU NVIDIA RTX 4090 (16384 núcleos CUDA).</p>
+        <p><strong>Estimación secuencial:</strong> CPU puede alcanzar ~100 GFLOPS sostenidos en doble precisión (multiplicación optimizada).<br>
+        T_seq = (5 × 10<sup>12</sup> ops) / (1 × 10<sup>11</sup> ops/s) = <strong>50 segundos por iteración</strong> → 200 iteraciones ≈ <strong>2.78 horas</strong>.</p>
+        <p><strong>Estimación paralela (OpenMP, 16 hilos):</strong> Speedup ideal 16, práctico ~12 por overhead de memoria.<br>
+        T_par ≈ 50/12 ≈ <strong>4.17 segundos por iteración</strong> → 200 iteraciones ≈ <strong>14 minutos</strong>.</p>
+        <p><strong>Estimación GPU (CUDA):</strong> RTX 4090 tiene ~82 TFLOPS FP32. Aprovechando Tensor Cores para multiplicación de matrices (cuando es posible), se puede alcanzar &gt;100 TFLOPS. T_GPU ≈ 5e12 ops / 1e14 ops/s = <strong>0.05 s por iteración</strong> → 200 iteraciones ≈ <strong>10 segundos totales</strong> (más transferencias PCIe).</p>
+        
+        <div class="image-placeholder">
+            <span>📊 figura2.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Gráfico de barras comparando tiempo estimado por iteración (segundos) en CPU secuencial, OpenMP y GPU para factorización matricial con N=500k, I=50k, K=100."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>4. Caso de estudio 2: Plazo fijo</h2>
+        <p><strong>Requerimiento de negocio:</strong> El modelo debe reentrenarse cada noche en menos de <strong>30 minutos</strong> (1800 segundos) para 200 iteraciones. Esto implica un tiempo máximo por iteración de <strong>9 segundos</strong>.</p>
+        <p>Rendimiento requerido = 5 × 10<sup>12</sup> ops / 9 s = <strong>5.56 × 10<sup>11</sup> ops/s (556 GFLOPS)</strong> sostenidos.</p>
+        <p><strong>Hardware mínimo sugerido:</strong></p>
+        <ul>
+            <li><strong>Opción económica:</strong> 2× CPU AMD EPYC 7452 (64 núcleos total) + optimización AVX-512 → estimado 600 GFLOPS.</li>
+            <li><strong>Opción recomendada:</strong> 1× GPU NVIDIA RTX 4080 (~48 TFLOPS) → más que suficiente, incluso con overhead de transferencia.</li>
+            <li><strong>Opción distribuida (si no hay GPU):</strong> Cluster de 8 nodos con 2× Xeon Gold cada uno (total 128 núcleos) usando MPI, con latencia de red controlada.</li>
+        </ul>
+        
+        <div class="image-placeholder">
+            <span>📈 figura3.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Gráfica de rendimiento requerido (GFLOPS) vs tamaño de usuarios para mantener tiempo de reentrenamiento menor a 30 minutos."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>5. Mediciones empíricas (resultados reales en hardware de prueba)</h2>
+        <p><strong>Hardware de prueba:</strong> AMD Ryzen 7 5800X (8 núcleos), 32GB RAM, NVIDIA RTX 3060. Tamaño reducido para demostración: N<sub>u</sub>=10,000, N<sub>i</sub>=5,000, K=50 (ops por iteración ≈ 5×10<sup>9</sup>).</p>
+        
+        <table>
+            <thead>
+                <tr><th>Implementación</th><th>Tiempo por iteración (ms)</th><th>Speedup vs secuencial</th><th>Speedup teórico (Amdahl)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Secuencial (C++ optimizado)</td><td>2450</td><td>1.0</td><td>1.0</td></tr>
+                <tr><td>OpenMP (8 hilos, schedule dinámico)</td><td>420</td><td>5.83</td><td>7.5 (f=0.1)</td></tr>
+                <tr><td>CUDA (kernel simple)</td><td>85</td><td>28.8</td><td>32.0</td></tr>
+                <tr><td>CUDA + Memoria compartida (tiling)</td><td>62</td><td>39.5</td><td>40.0</td></tr>
+            </tbody>
+        </table>
+        
+        <p><strong>Análisis de desviaciones:</strong> El speedup real en OpenMP (5.83x vs 7.5x teórico) se debe a <strong>contención de caché L3</strong> (false sharing en matrices) y overhead de planificación dinámica. En CUDA, la diferencia se explica por <strong>tiempo de transferencia PCIe</strong> (no contabilizado en el modelo teórico) y <strong>latencia de memoria global</strong>.</p>
+        <p><strong>Métrica de Karp-Flatt:</strong> Para OpenMP con 8 hilos: fracción serial experimental f = (1/5.83 - 1/8) / (1 - 1/8) ≈ 0.07 → indica 7% de código no paralelizable (inicialización, copias).</p>
+
+        <div class="image-placeholder">
+            <span>📉 figura4.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Gráfica comparativa de speedup real vs teórico (Amdahl con f=0.07) para multiplicación de matrices en factorización SVD."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>6. Análisis de escalamiento (strong &amp; weak scaling)</h2>
+        <p><strong>Strong scaling (tamaño fijo N<sub>u</sub>=10,000, N<sub>i</sub>=5,000, K=50):</strong></p>
+        <ul>
+            <li>1 núcleo: 2450 ms</li>
+            <li>2 núcleos: 1250 ms (eficiencia 98%)</li>
+            <li>4 núcleos: 680 ms (eficiencia 90%)</li>
+            <li>8 núcleos: 420 ms (eficiencia 73%)</li>
+            <li>16 núcleos (con MPI): 310 ms (eficiencia 49%, dominado por comunicación)</li>
+        </ul>
+        <p><strong>Weak scaling (duplicar tamaño al duplicar núcleos):</strong> Se mantiene eficiencia &gt;80% hasta 8 nodos en cluster MPI gracias a la naturaleza de bloque de la multiplicación de matrices.</p>
+        <p><strong>Función de isoeficiencia:</strong> Para mantener eficiencia constante del 80%, el tamaño del problema debe crecer como <strong>N ∝ p<sup>1.15</sup></strong>, determinado experimentalmente.</p>
+        
+        <div class="image-placeholder">
+            <span>📐 figura5.jpg</span>
+            <div class="tooltip-text"><strong>Prompt + script Python:</strong> "Curva de isoeficiencia para multiplicación de matrices en sistema de recomendación. Eje X: número de procesadores, Eje Y: tamaño del problema (N_usuarios)."<br><br>
+            <strong>Código:</strong><br>
+            <code>import matplotlib.pyplot as plt<br>
+            import numpy as np<br>
+            p = np.array([1,2,4,8,16,32])<br>
+            N = 10000 * p**1.15<br>
+            plt.loglog(p, N, 'o-')<br>
+            plt.xlabel('Procesadores')<br>
+            plt.ylabel('Usuarios (miles)')<br>
+            plt.title('Isoeficiencia 80%')<br>
+            plt.savefig('figura5.jpg')</code></div>
+            <div>← Pase el ratón para ver prompt y script</div>
+        </div>
+
+        <h2>7. Depuración y detección de overhead</h2>
+        <p>Herramientas utilizadas:</p>
+        <ul>
+            <li><strong>Intel VTune:</strong> Detectó 12% de tiempo en barreras implícitas en OpenMP debido a desbalance de carga (algunas filas de la matriz tienen más cálculos).</li>
+            <li><strong>NVIDIA Nsight Systems:</strong> Identificó que el 18% del tiempo en CUDA se gasta en <code>cudaMemcpy</code> (transferencias host-device). Solución: usar memoria unificada (<code>cudaMallocManaged</code>) y prefetching asíncrono.</li>
+            <li><strong>perf + Valgrind (helgrind):</strong> No se encontraron condiciones de carrera graves, pero sí conflictos de caché L3 entre hilos adyacentes.</li>
+        </ul>
+        
+        <div class="image-placeholder">
+            <span>🐞 figura6.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Flame graph de perfil de ejecución CUDA mostrando hotspots: kernel de multiplicación (70%), transferencias PCIe (18%) y sincronización (12%)."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>8. Evidencias de aprendizaje por unidad temática</h2>
+        <ul>
+            <li><strong>Unidad I (Arquitecturas):</strong> Se justificó el uso de memoria compartida (OpenMP) vs distribuida (MPI) vs aceleradores (CUDA). Taxonomía de Flynn: SIMD para AVX-512, MIMD para multicore.</li>
+            <li><strong>Unidad II (Diseño):</strong> Aplicación completa del método Foster. Cálculo de speedup, eficiencia, leyes de Amdahl/Gustafson y métrica de Karp-Flatt.</li>
+            <li><strong>Unidad III (Memoria compartida):</strong> Implementación OpenMP con cláusulas de reducción y planificación dinámica. Análisis de coherencia de caché y false sharing.</li>
+            <li><strong>Unidad IV (Sistemas distribuidos):</strong> Versión MPI para cluster, análisis de overhead de red y topología de interconexión.</li>
+            <li><strong>Unidad V (Flujo de datos / aceleradores):</strong> Kernel CUDA optimizado con memoria compartida (tiling) y uso de flujos asíncronos para solapar transferencias.</li>
+        </ul>
+        
+        <div class="image-placeholder">
+            <span>🖼️ figura7.jpg</span>
+            <div class="tooltip-text"><strong>Prompt IA:</strong> "Diagrama de arquitectura híbrida CPU-GPU con flujo de datos: host carga matrices, transfiere a GPU, kernel en memoria compartida, resultados devueltos."</div>
+            <div>← Pase el ratón para ver prompt</div>
+        </div>
+
+        <h2>9. Conclusiones y recomendaciones</h2>
+        <p>La paralelización del kernel de multiplicación de matrices reduce el tiempo de entrenamiento del sistema de recomendación de <strong>2.78 horas a 10 segundos por iteración</strong> utilizando GPU. Para despliegue en producción (reentrenamiento nocturno en 30 minutos), se recomienda una GPU RTX 4080 o superior. El overhead principal es la transferencia PCIe (CUDA) y la contención de caché (OpenMP). Se sugiere explorar <strong>cudaGraphs</strong> para reducir lanzamiento de kernels y <strong>memoria unificada</strong> para simplificar manejo de datos.</p>
+        
+        <div class="footer-note">
+            📌 Este reporte es un ejemplo ilustrativo basado en un problema real de factorización matricial para recomendaciones. Los resultados numéricos son simulaciones realistas, no mediciones exactas.
+        </div>
+    </div>
+</div>
+
+</body></html>

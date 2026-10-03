@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { SimulationResult, SimulationStatusResponse } from "./api-types";
+import { simulationService } from "../services";
 
 interface UseSimulationOptions {
   lookAhead: number;
@@ -42,15 +43,7 @@ export function useSimulation({ lookAhead }: UseSimulationOptions): UseSimulatio
     setStatus("starting");
 
     try {
-      const res = await fetch("/api/simular", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lookAhead }),
-      });
-
-      if (!res.ok) throw new Error("Failed to start simulation");
-
-      const data = await res.json();
+      const data = await simulationService.startSimulation(lookAhead, "classic");
       simulationIdRef.current = data.simulationId;
       setStatus("running");
 
@@ -58,12 +51,8 @@ export function useSimulation({ lookAhead }: UseSimulationOptions): UseSimulatio
         if (!simulationIdRef.current) return;
 
         try {
-          const statusRes = await fetch(
-            `/api/simular/${simulationIdRef.current}/status`
-          );
-          if (!statusRes.ok) return;
-
-          const statusData: SimulationStatusResponse = await statusRes.json();
+          const statusData: SimulationStatusResponse =
+            await simulationService.getStatus(simulationIdRef.current, "classic");
 
           setProgress(statusData.progress);
           setCurrentAlgorithm(statusData.currentAlgorithm);
@@ -74,12 +63,8 @@ export function useSimulation({ lookAhead }: UseSimulationOptions): UseSimulatio
               pollingRef.current = null;
             }
 
-            const resultRes = await fetch(
-              `/api/simular/${simulationIdRef.current}/resultados`
-            );
-            if (!resultRes.ok) throw new Error("Failed to fetch results");
-
-            const resultData: SimulationResult = await resultRes.json();
+            const resultData: SimulationResult =
+              await simulationService.getResults(simulationIdRef.current, "classic");
             setResult(resultData);
             setStatus("completed");
           } else if (statusData.status === "error") {

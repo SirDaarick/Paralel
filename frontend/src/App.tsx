@@ -6,7 +6,10 @@ import { ResultsPage } from "./components/ResultsPage";
 import { ProgressBars } from "./components/ProgressBars";
 import { TheoryModal } from "./components/TheoryModal";
 import { useSimulation } from "./hooks/useSimulation";
+import { useMpiSimulation } from "./hooks/useMpiSimulation";
+import { ALGO_META } from "./hooks/api-types";
 import type { SimulationResult } from "./hooks/api-types";
+import { simulationService } from "./services";
 import "./App.css";
 
 const HISTORY_KEY = "paralel_history";
@@ -33,19 +36,49 @@ function saveHistory(entry: HistoryEntry) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
 }
 
+const MPI_ALGOS = [
+  { key: "mpi", label: ALGO_META.mpi.label, color: ALGO_META.mpi.color },
+  { key: "cuda", label: ALGO_META.cuda.label, color: ALGO_META.cuda.color },
+];
+
 export default function App() {
   const navigate = useNavigate();
   const [lookAhead, setLookAhead] = useState(2);
-  const { status, result, error, progress, currentAlgorithm, start, reset } =
-    useSimulation({ lookAhead });
+  const [simMode, setSimMode] = useState<"classic" | "mpi">("classic");
+  const [mpiAvailable, setMpiAvailable] = useState(false);
+
+  // Both hooks are always instantiated (React rules); only the active one is used
+  const classicSim = useSimulation({ lookAhead });
+  const mpiSim = useMpiSimulation({ lookAhead });
+
+  // Derive effective mode: fall back to classic if MPI unavailable
+  const effectiveSimMode: "classic" | "mpi" =
+    simMode === "mpi" && !mpiAvailable ? "classic" : simMode;
+
+  // Derive active simulation based on mode
+  const activeSim = effectiveSimMode === "classic" ? classicSim : mpiSim;
+  const { status, result, error, progress, currentAlgorithm } = activeSim;
+
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
   const [loadFromHistory, setLoadFromHistory] = useState<SimulationResult | null>(null);
   const [showTheory, setShowTheory] = useState(false);
 
+  // Check MPI availability on mount
+  useEffect(() => {
+    simulationService
+      .checkHealth()
+      .then((health) => setMpiAvailable(health.mpi))
+      .catch(() => setMpiAvailable(false));
+  }, []);
+
   const handleStart = () => {
     setLoadFromHistory(null);
     navigate("/simulation");
-    start();
+    if (effectiveSimMode === "classic") {
+      classicSim.start();
+    } else {
+      mpiSim.start();
+    }
   };
 
   const handleHistorySelect = (entry: HistoryEntry) => {
@@ -55,7 +88,8 @@ export default function App() {
   };
 
   const handleBack = () => {
-    reset();
+    classicSim.reset();
+    mpiSim.reset();
     setLoadFromHistory(null);
     navigate("/");
     setHistory(loadHistory());
@@ -93,6 +127,9 @@ export default function App() {
         history={history}
         onHistorySelect={handleHistorySelect}
         isStarting={isSimActive}
+        simMode={simMode}
+        onSimModeChange={setSimMode}
+        mpiAvailable={mpiAvailable}
       />
     </>
   );
@@ -124,6 +161,7 @@ export default function App() {
           progress={progress}
           currentAlgorithm={currentAlgorithm}
           lookAhead={lookAhead}
+          algorithms={effectiveSimMode === "mpi" ? MPI_ALGOS : undefined}
         />
       </div>
     );
