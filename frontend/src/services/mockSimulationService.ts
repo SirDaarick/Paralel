@@ -6,15 +6,13 @@ import type {
   ISimulationService,
   HealthResponse,
 } from "./simulationService.interface";
-import {
-  DEMO_SIMULATION_RESULT_CLASSIC,
-  DEMO_SIMULATION_RESULT_MPI,
-} from "../mocks/demoReplayData";
+import { getDemoSimulationResult } from "../mocks/demoReplayData";
 
 interface ActiveDemoSim {
   startTime: number;
   durationMs: number;
   mode: "classic" | "mpi";
+  lookAhead: number;
 }
 
 export class MockSimulationService implements ISimulationService {
@@ -22,7 +20,6 @@ export class MockSimulationService implements ISimulationService {
   private readonly defaultDurationMs = 2400; // 2.4 segundos para apreciar la barra de carga
 
   async checkHealth(): Promise<HealthResponse> {
-    // En modo demo, simulamos que todas las capacidades de cómputo están disponibles
     return {
       openmp: true,
       cuda: true,
@@ -32,7 +29,7 @@ export class MockSimulationService implements ISimulationService {
   }
 
   async startSimulation(
-    _lookAhead: number,
+    lookAhead: number,
     mode: "classic" | "mpi" = "classic"
   ): Promise<{ simulationId: string }> {
     const simulationId = `demo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -40,6 +37,7 @@ export class MockSimulationService implements ISimulationService {
       startTime: Date.now(),
       durationMs: this.defaultDurationMs,
       mode,
+      lookAhead: Math.max(1, Math.min(5, lookAhead)),
     });
     return { simulationId };
   }
@@ -50,7 +48,6 @@ export class MockSimulationService implements ISimulationService {
   ): Promise<SimulationStatusResponse> {
     const sim = this.activeSimulations.get(simulationId);
     if (!sim) {
-      // Si por alguna razón no existe, completamos de inmediato
       return {
         status: "completed",
         progress: 100,
@@ -99,13 +96,10 @@ export class MockSimulationService implements ISimulationService {
   ): Promise<SimulationResult> {
     const sim = this.activeSimulations.get(simulationId);
     const effectiveMode = sim ? sim.mode : mode;
+    const effectiveLookAhead = sim ? sim.lookAhead : 2;
 
-    // Limpiamos la simulación activa
     this.activeSimulations.delete(simulationId);
 
-    if (effectiveMode === "mpi") {
-      return DEMO_SIMULATION_RESULT_MPI;
-    }
-    return DEMO_SIMULATION_RESULT_CLASSIC;
+    return getDemoSimulationResult(effectiveLookAhead, effectiveMode);
   }
 }
